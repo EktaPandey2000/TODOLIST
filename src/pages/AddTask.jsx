@@ -6,12 +6,17 @@ import Navbar from "../components/Navbar";
 function AddTask({ darkMode, setDarkMode }) {
   const navigate = useNavigate();
 
-  const [todolist, setTodolist] = useLocalStorage("todolist",[]
+  const [todolist, setTodolist] = useLocalStorage(
+    "todolist",
+    []
   );
 
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("pending");
   const [priority, setPriority] = useState("medium");
+
+  // Due Date
+  const [dueDate, setDueDate] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -24,6 +29,9 @@ function AddTask({ darkMode, setDarkMode }) {
       title: title,
       status: status,
       priority: priority,
+
+      // Due Date
+      dueDate: dueDate,
 
       createdAt:
         now.toLocaleDateString() +
@@ -46,6 +54,7 @@ function AddTask({ darkMode, setDarkMode }) {
     setTitle("");
     setStatus("pending");
     setPriority("medium");
+    setDueDate("");
 
     navigate("/");
   };
@@ -135,7 +144,7 @@ function AddTask({ darkMode, setDarkMode }) {
               </div>
 
               {/* Priority */}
-              <div className="mb-6">
+              <div className="mb-5">
                 <label className="block text-center font-semibold mb-2">
                   Priority
                 </label>
@@ -163,6 +172,26 @@ function AddTask({ darkMode, setDarkMode }) {
                     Low
                   </option>
                 </select>
+              </div>
+
+              {/* Due Date */}
+              <div className="mb-6">
+                <label className="block text-center font-semibold mb-2">
+                  Due Date
+                </label>
+
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) =>
+                    setDueDate(e.target.value)
+                  }
+                  className={`w-full border rounded-lg px-4 py-3 text-center outline-none focus:ring-2 focus:ring-purple-500 ${
+                    darkMode
+                      ? "bg-gray-800 text-white border-gray-600"
+                      : "bg-white text-black border-gray-300"
+                  }`}
+                />
               </div>
 
               {/* Add Button */}

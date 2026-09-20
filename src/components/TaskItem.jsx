@@ -2,71 +2,49 @@ import { useState } from "react";
 import { FaTrash, FaEdit, FaCheck, FaTimes } from "react-icons/fa";
 
 function TaskItem({ index, task, onDelete, onEdit }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(task);
-
-  const startEdit = () => {
-    setEditValue(task);
-    setIsEditing(true);
-  };
-
-  const saveEdit = () => {
-    const trimmed = editValue.trim();
-
-    if (trimmed === "") {
-      return;
-    }
-
-    onEdit(index, trimmed);
-    setIsEditing(false);
-  };
-
-  const cancelEdit = () => {
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (event) => {
-    if (event.key === "Enter") {
-      saveEdit();
-    } else if (event.key === "Escape") {
-      cancelEdit();
-    }
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(task);
+  const save = () => {
+    const newValue = value.trim();
+    if (!newValue) return;
+    onEdit(index, newValue);
+    setEditing(false);
   };
 
   return (
     <li className="bg-white rounded-xl shadow-md px-5 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3 flex-1">
-        <span className="text-purple-600 font-bold">{index + 1}.</span>
-
-        {isEditing ? (
+        <span className="text-purple-600 font-bold">
+          {index + 1}.
+        </span>
+        {editing ? (
           <input
-            type="text"
             autoFocus
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 border border-purple-300 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-purple-200"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") save();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            className="flex-1 border border-purple-300 rounded-lg px-3 py-1.5 outline-none"
           />
         ) : (
-          <span className="text-gray-700 font-medium">{task}</span>
+          <span className="text-gray-700 font-medium">
+            {task}
+          </span>
         )}
       </div>
 
-      <div className="flex items-center gap-4 ml-3">
-        {isEditing ? (
+      <div className="flex gap-4 ml-3">
+        {editing ? (
           <>
-            <button
-              type="button"
-              onClick={saveEdit}
-              className="text-green-500 text-xl hover:text-green-700 hover:scale-110 transition-all duration-300"
-            >
+            <button onClick={save} className="text-green-500 text-xl">
               <FaCheck />
             </button>
 
             <button
-              type="button"
-              onClick={cancelEdit}
-              className="text-gray-400 text-xl hover:text-gray-600 hover:scale-110 transition-all duration-300"
+              onClick={() => setEditing(false)}
+              className="text-gray-400 text-xl"
             >
               <FaTimes />
             </button>
@@ -74,17 +52,18 @@ function TaskItem({ index, task, onDelete, onEdit }) {
         ) : (
           <>
             <button
-              type="button"
-              onClick={startEdit}
-              className="text-green-500 text-xl hover:text-green-700 hover:scale-110 hover:rotate-12 transition-all duration-300"
+              onClick={() => {
+                setValue(task);
+                setEditing(true);
+              }}
+              className="text-green-500 text-xl"
             >
               <FaEdit />
             </button>
 
             <button
-              type="button"
               onClick={() => onDelete(index)}
-              className="text-red-500 text-xl hover:text-red-700 hover:scale-110 hover:rotate-12 transition-all duration-300"
+              className="text-red-500 text-xl"
             >
               <FaTrash />
             </button>

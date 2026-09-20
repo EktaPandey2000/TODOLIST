@@ -4,60 +4,67 @@ import useLocalStorage from "../hooks/useLocalStorage";
 import Navbar from "../components/Navbar";
 
 function Home({ darkMode, setDarkMode }) {
-  const [todolist, setTodolist] = useLocalStorage(
-    "todolist",
-    []
-  );
-
+  const [todolist, setTodolist] = useLocalStorage("todolist",[]);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-
-  // Edit ke liye selected task
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
   const [editIndex, setEditIndex] = useState(null);
-
   const [editTitle, setEditTitle] = useState("");
-  const [editCategory, setEditCategory] =
-    useState("Personal");
-  const [editStatus, setEditStatus] =
-    useState("pending");
-  const [editPriority, setEditPriority] =
-    useState("medium");
+  const [editCategory, setEditCategory] = useState("Personal");
+  const [editStatus, setEditStatus] = useState("pending");
+  const [editPriority, setEditPriority] = useState("medium");
+  const [editDueDate, setEditDueDate] = useState("");
 
-  // Confetti burst state - jab task complete mark ho
-  const [confetti, setConfetti] = useState([]);
-
-  const fireConfetti = () => {
-    const colors = ["#ff6ec4", "#7873f5", "#22c55e", "#f97316", "#facc15"];
-    const pieces = Array.from({ length: 18 }).map((_, i) => ({
-      id: Date.now() + i,
-      left: 45 + Math.random() * 10 + "%",
-      color: colors[Math.floor(Math.random() * colors.length)],
-      x: (Math.random() - 0.5) * 200 + "px",
-      y: -(100 + Math.random() * 100) + "px",
-    }));
-    setConfetti(pieces);
-    setTimeout(() => setConfetti([]), 900);
-  };
-
-  // Delete Task
   const deleteTodo = (index) => {
     setTodolist(
       todolist.filter((_, i) => i !== index)
     );
   };
 
-  // Edit button
+  const getDueStatus = (todo) => {
+    if (!todo.dueDate) {
+      return "no-date";
+    }
+
+    // Agar task complete hai
+    if (todo.status === "complete") {
+      return "completed";
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueDate = new Date(todo.dueDate);
+    dueDate.setHours(0, 0, 0, 0);
+
+    // Due date nikal gayi aur task pending hai
+    if (dueDate < today) {
+      return "overdue";
+    }
+
+    // Due date aaj hai
+    if (dueDate.getTime() === today.getTime()) {
+      return "today";
+    }
+
+    // Due date future me hai
+    return "upcoming";
+  };
+
+  // EDIT OPEN
   const editTodo = (index) => {
     const todo = todolist[index];
 
     setEditIndex(index);
     setEditTitle(todo.title);
     setEditCategory(todo.category || "Other");
-    setEditStatus(todo.status);
+    setEditStatus(todo.status || "pending");
     setEditPriority(todo.priority || "medium");
+    setEditDueDate(todo.dueDate || "");
   };
 
-  // Save Edited Task
+  // SAVE EDIT
   const saveEdit = () => {
     if (editTitle.trim() === "") return;
 
@@ -70,8 +77,9 @@ function Home({ darkMode, setDarkMode }) {
 
       title: editTitle,
       category: editCategory,
-      priority: editPriority,
       status: editStatus,
+      priority: editPriority,
+      dueDate: editDueDate,
 
       completedAt:
         editStatus === "complete"
@@ -83,21 +91,15 @@ function Home({ darkMode, setDarkMode }) {
     };
 
     setTodolist(list);
-
-    // Edit mode close
     setEditIndex(null);
-    setEditTitle("");
-    setEditCategory("Personal");
-    setEditStatus("pending");
-    setEditPriority("medium");
   };
 
-  // Cancel Edit
+  // CANCEL EDIT
   const cancelEdit = () => {
     setEditIndex(null);
   };
 
-  // Complete / Pending
+  // COMPLETE / PENDING
   const completeTodo = (index) => {
     const list = [...todolist];
 
@@ -110,8 +112,6 @@ function Home({ darkMode, setDarkMode }) {
         now.toLocaleDateString() +
         " " +
         now.toLocaleTimeString();
-
-      fireConfetti();
     } else {
       list[index].status = "pending";
       list[index].completedAt = "";
@@ -120,7 +120,7 @@ function Home({ darkMode, setDarkMode }) {
     setTodolist(list);
   };
 
-  // Search + Filter
+  // SEARCH + FILTER
   const filteredTodos = todolist.filter((todo) => {
     const statusMatch =
       filter === "all" ||
@@ -133,19 +133,40 @@ function Home({ darkMode, setDarkMode }) {
     return statusMatch && searchMatch;
   });
 
+  // PAGINATION
+  const totalPages = Math.ceil(
+    filteredTodos.length / itemsPerPage
+  );
+
+  const start = (page - 1) * itemsPerPage;
+
+  const currentTodos = filteredTodos.slice(
+    start,
+    start + itemsPerPage
+  );
+
   return (
-    <div className="min-h-screen px-4 py-10">
+    <div
+      className={`min-h-screen px-4 py-10 ${
+        darkMode
+          ? "bg-black text-white"
+          : "bg-white text-black"
+      }`}
+    >
       <div className="w-full max-w-7xl mx-auto">
 
-        {/* Navbar */}
+        {/* NAVBAR */}
         <Navbar
           darkMode={darkMode}
           setDarkMode={setDarkMode}
           search={search}
-          setSearch={setSearch}
+          setSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
         />
 
-        {/* Heading */}
+        {/* TITLE */}
         <h1
           className={`text-4xl font-bold text-center mb-8 ${
             darkMode
@@ -156,28 +177,18 @@ function Home({ darkMode, setDarkMode }) {
           TODO List
         </h1>
 
-        {/* Confetti burst (task complete pe fire hota hai) */}
-        {confetti.map((c) => (
-          <span
-            key={c.id}
-            className="confetti-piece"
-            style={{
-              left: c.left,
-              backgroundColor: c.color,
-              "--x": c.x,
-              "--y": c.y,
-            }}
-          />
-        ))}
+        {/* FILTER */}
+        <div className="flex justify-center gap-3 mb-6">
 
-        {/* Filter Buttons */}
-        <div className="flex flex-wrap justify-center gap-3 mb-6">
-
+          {/* ALL */}
           <button
-            onClick={() => setFilter("all")}
-            className={`btn-anim px-5 py-2 max-sm:px-3 max-sm:py-1.5 rounded-lg font-semibold max-sm:text-sm transition ${
+            onClick={() => {
+              setFilter("all");
+              setPage(1);
+            }}
+            className={`px-5 py-2 rounded-lg ${
               filter === "all"
-                ? "bg-black text-white"
+                ? "bg-purple-600 text-white"
                 : darkMode
                 ? "bg-gray-800 text-white"
                 : "bg-gray-200"
@@ -186,9 +197,13 @@ function Home({ darkMode, setDarkMode }) {
             All
           </button>
 
+          {/* PENDING */}
           <button
-            onClick={() => setFilter("pending")}
-            className={`btn-anim px-5 py-2 max-sm:px-3 max-sm:py-1.5 rounded-lg font-semibold max-sm:text-sm transition ${
+            onClick={() => {
+              setFilter("pending");
+              setPage(1);
+            }}
+            className={`px-5 py-2 rounded-lg ${
               filter === "pending"
                 ? "bg-orange-500 text-white"
                 : darkMode
@@ -199,9 +214,13 @@ function Home({ darkMode, setDarkMode }) {
             Pending
           </button>
 
+          {/* COMPLETE */}
           <button
-            onClick={() => setFilter("complete")}
-            className={`btn-anim px-5 py-2 max-sm:px-3 max-sm:py-1.5 rounded-lg font-semibold max-sm:text-sm transition ${
+            onClick={() => {
+              setFilter("complete");
+              setPage(1);
+            }}
+            className={`px-5 py-2 rounded-lg ${
               filter === "complete"
                 ? "bg-green-600 text-white"
                 : darkMode
@@ -214,30 +233,18 @@ function Home({ darkMode, setDarkMode }) {
 
         </div>
 
-        {/* Empty State */}
-        {filteredTodos.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="empty-state-emoji">📝</span>
-            <p
-              className={`mt-4 text-lg font-semibold ${
-                darkMode ? "text-gray-300" : "text-gray-500"
-              }`}
-            >
-              Koi task nahi mila — naya add kar do!
-            </p>
-          </div>
-        )}
+        {/* TABLE */}
+        <div className="w-full overflow-x-auto">
 
-        {/* Table */}
-        {filteredTodos.length > 0 && (
-        <div className="w-full max-w-full overflow-x-auto">
           <table
-            className={`w-full min-w-[175] table-fixed border ${
+            className={`w-full table-fixed border ${
               darkMode
                 ? "border-gray-700"
                 : "border-gray-300"
             }`}
           >
+
+            {/* HEADER */}
             <thead
               className={
                 darkMode
@@ -246,87 +253,156 @@ function Home({ darkMode, setDarkMode }) {
               }
             >
               <tr>
-                <th className="border p-3 text-center w-[6%]">
+
+                <th className="border p-3 text-center">
                   No.
                 </th>
 
-                <th className="border p-3 text-center w-[23%]">
+                <th className="border p-3 text-center">
                   Task
                 </th>
 
-                <th className="border p-3 text-center w-[13%]">
+                <th className="border p-3 text-center">
                   Category
                 </th>
 
-                <th className="border p-3 text-center w-[23%]">
+                <th className="border p-3 text-center">
+                  Due Date
+                </th>
+
+                <th className="border p-3 text-center">
                   Created At
                 </th>
 
-                <th className="border p-3 text-center w-[12%]">
+                <th className="border p-3 text-center">
                   Status
-                </th>
+                </th> 
 
-                <th className="border p-3 text-center w-[11%]">
+                <th className="border p-3 text-center">
                   Priority
                 </th>
 
-                <th className="border p-3 text-center w-[12%]">
+                <th className="border p-3 text-center">
                   Action
-                </th>
+                </th> 
+
               </tr>
             </thead>
 
+            {/* BODY */}  
             <tbody>
-              {filteredTodos.map((todo, index) => (
+
+              {currentTodos.map((todo, index) => (
+
                 <tr key={index}>
 
-                  {/* No */}
+                  {/* NO */}
                   <td className="border p-3 text-center">
-                    {index + 1}
+                    {start + index + 1}
                   </td>
 
-                  {/* Task */}
+                  {/* TASK */}
                   <td className="border p-3 text-center wrap-break-words">
                     {todo.title}
                   </td>
-
-                  {/* Category */}
+                  {/* CATEGORY */}
                   <td className="border p-3 text-center">
-
                     {todo.category === "Personal" && (
-                      <span className="inline-block bg-purple-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs whitespace-nowrap">
+                      <span className="category-badge inline-block bg-purple-500 text-white px-3 py-1 rounded-lg text-sm">
                         Personal
                       </span>
                     )}
-
                     {todo.category === "Work" && (
-                      <span className="inline-block bg-blue-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs whitespace-nowrap">
+                      <span className="category-badge inline-block bg-blue-500 text-white px-3 py-1 rounded-lg text-sm">
                         Work
                       </span>
                     )}
 
                     {todo.category === "Study" && (
-                      <span className="inline-block bg-indigo-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs whitespace-nowrap">
+                      <span className="category-badge inline-block bg-indigo-500 text-white px-3 py-1 rounded-lg text-sm">
                         Study
                       </span>
                     )}
 
                     {todo.category === "Shopping" && (
-                      <span className="inline-block bg-pink-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs whitespace-nowrap">
+                      <span className="category-badge inline-block bg-pink-500 text-white px-3 py-1 rounded-lg text-sm">
                         Shopping
                       </span>
                     )}
 
                     {(!todo.category ||
                       todo.category === "Other") && (
-                      <span className="inline-block bg-gray-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs whitespace-nowrap">
+                      <span className="category-badge inline-block bg-gray-500 text-white px-3 py-1 rounded-lg text-sm">
                         Other
                       </span>
                     )}
 
                   </td>
 
-                  {/* Created At */}
+                  {/* DUE DATE */}
+                  <td className="border p-3 text-center">
+
+                    {/* NO DATE */}
+                    {!todo.dueDate && (
+                      <span className="text-gray-500">
+                        No date
+                      </span>
+                    )}
+
+                    {/* DATE EXISTS */}
+                    {todo.dueDate && (
+                      <>
+                        {/* DATE */}
+                        <p className="font-medium">
+                          {todo.dueDate}
+                        </p>
+
+                        {/* OVERDUE */}
+                        {getDueStatus(todo) ===
+                          "overdue" && (
+                          <div className="mt-2">
+
+                            <span className="inline-block bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                              Overdue
+                            </span>
+
+                            <p className="text-red-500 text-xs mt-1 font-semibold">
+                              Task Not Completed
+                            </p>
+
+                          </div>
+                        )}
+
+                        {/* DUE TODAY */}
+                        {getDueStatus(todo) ===
+                          "today" && (
+                          <span className="inline-block mt-2 bg-orange-500 text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                            Due Today
+                          </span>
+                        )}
+
+                        {/* UPCOMING */}
+                        {getDueStatus(todo) ===
+                          "upcoming" && (
+                          <span className="inline-block mt-2 bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                            Upcoming
+                          </span>
+                        )}
+
+                        {/* COMPLETED */}
+                        {getDueStatus(todo) ===
+                          "completed" && (
+                          <span className="inline-block mt-2 bg-green-500 text-white px-3 py-1 rounded-lg text-xs font-semibold">
+                            Completed
+                          </span>
+                        )}
+
+                      </>
+                    )}
+
+                  </td>
+
+                  {/* CREATED AT */}
                   <td className="border p-3 text-center text-sm wrap-break-words">
 
                     <p>
@@ -336,6 +412,7 @@ function Home({ darkMode, setDarkMode }) {
                     </p>
 
                     <p className="mt-3">
+
                       <b>
                         {todo.status === "pending"
                           ? "Pending:"
@@ -347,86 +424,164 @@ function Home({ darkMode, setDarkMode }) {
                       {todo.status === "pending"
                         ? todo.createdAt
                         : todo.completedAt}
+
                     </p>
 
                   </td>
 
-                  {/* Status */}
+                  {/* STATUS */}
                   <td className="border p-3 text-center">
+
                     <button
                       onClick={() =>
-                        completeTodo(index)
+                        completeTodo(
+                          todolist.indexOf(todo)
+                        )
                       }
-                      className={`btn-anim px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-white text-sm max-sm:text-xs font-semibold max-w-full transition ${
+                      className={`px-3 py-1 rounded-lg text-white transition hover:scale-105 ${
                         todo.status === "pending"
-                          ? "bg-orange-500 hover:bg-orange-600"
-                          : "bg-green-500 hover:bg-green-600"
+                          ? "bg-orange-500"
+                          : "bg-green-500"
                       }`}
                     >
                       {todo.status === "pending"
                         ? "Pending"
                         : "Complete"}
                     </button>
+
                   </td>
 
-                  {/* Priority */}
-                  <td className="border p-3 text-center ">
+                  {/* PRIORITY */}
+                  <td className="border p-3 text-center">
 
                     {todo.priority === "high" && (
-                      <span className="inline-block bg-red-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs max-w-full">
+                      <span className="inline-block bg-red-500 text-white px-3 py-1 rounded-lg text-sm">
                         High
                       </span>
                     )}
 
                     {todo.priority === "medium" && (
-                      <span className="inline-block bg-yellow-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs max-w-full">
+                      <span className="inline-block bg-yellow-500 text-white px-3 py-1 rounded-lg text-sm">
                         Medium
                       </span>
                     )}
 
                     {todo.priority === "low" && (
-                      <span className="inline-block bg-green-500 text-white px-3 py-1 max-sm:px-2 max-sm:py-0.5 rounded-lg text-sm max-sm:text-xs max-w-full">
+                      <span className="inline-block bg-green-500 text-white px-3 py-1 rounded-lg text-sm">
                         Low
                       </span>
                     )}
 
                   </td>
 
-                  {/* Actions */}
+                  {/* ACTION */}
                   <td className="border p-3">
-                    <div className="flex justify-center gap-3 max-sm:gap-2">
 
+                    <div className="flex justify-center gap-5">
+
+                      {/* EDIT */}
                       <button
                         onClick={() =>
-                          editTodo(index)
+                          editTodo(
+                            todolist.indexOf(todo)
+                          )
                         }
-                        className="btn-icon text-blue-500"
+                        className="text-blue-500 hover:scale-125 transition"
                         title="Edit"
                       >
                         <FaEdit />
                       </button>
 
+                      {/* DELETE */}
                       <button
                         onClick={() =>
-                          deleteTodo(index)
+                          deleteTodo(
+                            todolist.indexOf(todo)
+                          )
                         }
-                        className="btn-icon text-red-500"
+                        className="text-red-500 hover:scale-125 transition"
                         title="Delete"
                       >
                         <FaTrash />
                       </button>
 
                     </div>
+
                   </td>
 
                 </tr>
+
               ))}
+
             </tbody>
+
           </table>
+
         </div>
+
+        {/* NO TASK */}
+        {filteredTodos.length === 0 && (
+          <p className="text-center mt-6">
+            No tasks found
+          </p>
         )}
 
-        {/* Edit Form */}
+        {/* PAGINATION */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-6">
+
+            {/* PREVIOUS */}
+            <button
+              onClick={() => setPage(page - 1)}
+              disabled={page === 1}
+              className={`px-4 py-2 rounded-lg ${
+                darkMode
+                  ? "bg-gray-800 text-white"
+                  : "bg-gray-200"
+              } disabled:opacity-40`}
+            >
+              Previous
+            </button>
+
+            {/* PAGE NUMBERS */}
+            {Array.from(
+              { length: totalPages },
+              (_, i) => (
+                <button
+                  key={i}
+                  onClick={() =>
+                    setPage(i + 1)
+                  }
+                  className={`px-4 py-2 rounded-lg ${
+                    page === i + 1
+                      ? "bg-purple-600 text-white"
+                      : darkMode
+                      ? "bg-gray-800 text-white"
+                      : "bg-gray-200"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              )
+            )}
+
+            {/* NEXT */}
+            <button
+              onClick={() => setPage(page + 1)}
+              disabled={page === totalPages}
+              className={`px-4 py-2 rounded-lg ${
+                darkMode
+                  ? "bg-gray-800 text-white"
+                  : "bg-gray-200"
+              } disabled:opacity-40`}
+            >
+              Next
+            </button>
+
+          </div>
+        )}
+
+        {/* EDIT MODAL */}
         {editIndex !== null && (
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center px-4 z-50">
 
@@ -442,7 +597,7 @@ function Home({ darkMode, setDarkMode }) {
                 Edit Task
               </h2>
 
-              {/* Task */}
+              {/* TASK */}
               <label className="block text-center font-semibold mb-2">
                 Task
               </label>
@@ -453,14 +608,14 @@ function Home({ darkMode, setDarkMode }) {
                 onChange={(e) =>
                   setEditTitle(e.target.value)
                 }
-                className={`w-full border rounded-lg px-4 py-3 mb-5 text-center outline-none ${
+                className={`w-full border rounded-lg px-4 py-3 mb-5 text-center ${
                   darkMode
                     ? "bg-gray-800 border-gray-600 text-white"
                     : "bg-white border-gray-300 text-black"
                 }`}
               />
 
-              {/* Category */}
+              {/* CATEGORY */}
               <label className="block text-center font-semibold mb-2">
                 Category
               </label>
@@ -476,6 +631,7 @@ function Home({ darkMode, setDarkMode }) {
                     : "bg-white border-gray-300 text-black"
                 }`}
               >
+
                 <option value="Personal">
                   Personal
                 </option>
@@ -495,9 +651,28 @@ function Home({ darkMode, setDarkMode }) {
                 <option value="Other">
                   Other
                 </option>
+
               </select>
 
-              {/* Status */}
+              {/* DUE DATE */}
+              <label className="block text-center font-semibold mb-2">
+                Due Date
+              </label>
+
+              <input
+                type="date"
+                value={editDueDate}
+                onChange={(e) =>
+                  setEditDueDate(e.target.value)
+                }
+                className={`w-full border rounded-lg px-4 py-3 mb-5 text-center ${
+                  darkMode
+                    ? "bg-gray-800 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
+              />
+
+              {/* STATUS */}
               <label className="block text-center font-semibold mb-2">
                 Status
               </label>
@@ -513,6 +688,7 @@ function Home({ darkMode, setDarkMode }) {
                     : "bg-white border-gray-300 text-black"
                 }`}
               >
+
                 <option value="pending">
                   Pending
                 </option>
@@ -520,9 +696,10 @@ function Home({ darkMode, setDarkMode }) {
                 <option value="complete">
                   Complete
                 </option>
+
               </select>
 
-              {/* Priority */}
+              {/* PRIORITY */}
               <label className="block text-center font-semibold mb-2">
                 Priority
               </label>
@@ -532,15 +709,17 @@ function Home({ darkMode, setDarkMode }) {
                 onChange={(e) =>
                   setEditPriority(e.target.value)
                 }
-                className={`w-full border rounded-lg px-4 py-3 mb-3 text-center ${
+                className={`w-full border rounded-lg px-4 py-3 mb-6 text-center ${
                   darkMode
                     ? "bg-gray-800 border-gray-600 text-white"
                     : "bg-white border-gray-300 text-black"
                 }`}
               >
+
                 <option value="high">
                   High
                 </option>
+
                 <option value="medium">
                   Medium
                 </option>
@@ -548,29 +727,36 @@ function Home({ darkMode, setDarkMode }) {
                 <option value="low">
                   Low
                 </option>
+
               </select>
 
-              {/* Buttons */}
+              {/* BUTTONS */}
               <div className="flex gap-3">
 
+                {/* CANCEL */}
                 <button
                   onClick={cancelEdit}
-                  className={`btn-anim w-1/2 py-3 rounded-lg font-semibold ${
+                  className={`w-1/2 py-3 rounded-lg font-semibold ${
                     darkMode
-                      ? "bg-gray-700 hover:bg-gray-600"
-                      : "bg-gray-200 hover:bg-gray-300"
+                      ? "bg-gray-700"
+                      : "bg-gray-200"
                   }`}
                 >
                   Cancel
                 </button>
+
+                {/* SAVE */}
                 <button
                   onClick={saveEdit}
-                  className="btn-fancy w-1/2 py-4"
+                  className="w-1/2 bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold"
                 >
                   Save Changes
                 </button>
+
               </div>
+
             </div>
+
           </div>
         )}
 
@@ -578,4 +764,6 @@ function Home({ darkMode, setDarkMode }) {
     </div>
   );
 }
+
 export default Home;
+
