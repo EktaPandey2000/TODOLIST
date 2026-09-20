@@ -308,31 +308,31 @@ function Home({ darkMode, setDarkMode }) {
                   {/* CATEGORY */}
                   <td className="border p-3 text-center">
                     {todo.category === "Personal" && (
-                      <span className="category-badge inline-block bg-purple-500 text-white px-3 py-1 rounded-lg text-sm">
+                      <span className="category-badge inline-block max-w-full wrap-break-words whitespace-normal bg-gray-500 text-white px-3 py-1 rounded-lg text-sm">
                         Personal
                       </span>
                     )}
                     {todo.category === "Work" && (
-                      <span className="category-badge inline-block bg-blue-500 text-white px-3 py-1 rounded-lg text-sm">
+                      <span className="category-badge inline-block max-w-full wrap-break-words whitespace-normal bg-gray-500 text-white px-3 py-1 rounded-lg text-sm">
                         Work
                       </span>
                     )}
 
                     {todo.category === "Study" && (
-                      <span className="category-badge inline-block bg-indigo-500 text-white px-3 py-1 rounded-lg text-sm">
+                      <span className="category-badge inline-block max-w-full wrap-break-words whitespace-normal bg-gray-500 text-white px-3 py-1 rounded-lg text-sm">
                         Study
                       </span>
                     )}
 
                     {todo.category === "Shopping" && (
-                      <span className="category-badge inline-block bg-pink-500 text-white px-3 py-1 rounded-lg text-sm">
+                      <span className="category-badge inline-block max-w-full wrap-break-words whitespace-normal bg-gray-500 text-white px-3 py-1 rounded-lg text-sm">
                         Shopping
                       </span>
                     )}
 
                     {(!todo.category ||
                       todo.category === "Other") && (
-                      <span className="category-badge inline-block bg-gray-500 text-white px-3 py-1 rounded-lg text-sm">
+                      <span className="category-badge inline-block max-w-full wrap-break-words whitespace-normal bg-gray-500 text-white px-3 py-1 rounded-lg text-sm">
                         Other
                       </span>
                     )}
