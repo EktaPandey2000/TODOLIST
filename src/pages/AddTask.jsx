@@ -1,12 +1,23 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {FaArrowLeft,FaCalendarAlt,FaClipboardList,FaPlus,} from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaCalendarAlt,
+  FaClipboardList,
+  FaPlus,
+} from "react-icons/fa";
 import useLocalStorage from "../hooks/useLocalStorage";
 import Navbar from "../components/Navbar";
+import { useAuth } from "../context/AuthContext";
 
 function AddTask({ darkMode, setDarkMode }) {
   const navigate = useNavigate();
-  const [todolist, setTodolist] = useLocalStorage("todolist", []);
+  const { user } = useAuth();
+
+  const [todolist, setTodolist] = useLocalStorage(
+    `todolist_${user.username}`,
+    []
+  );
 
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Work");
@@ -82,20 +93,13 @@ function AddTask({ darkMode, setDarkMode }) {
       }`}
     >
       <div className="w-full max-w-7xl mx-auto">
-        {/* NAVBAR — wapas add kiya */}
-        <Navbar
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-        />
+        <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />
 
-        {/* CENTER CARD */}
         <div className="flex justify-center mt-6 sm:mt-10">
           <div className="w-full max-w-md">
             <div
               className={`rounded-3xl shadow-xl p-6 sm:p-8 ${
-                darkMode
-                  ? "bg-gray-900 border border-gray-800"
-                  : "bg-white"
+                darkMode ? "bg-gray-900 border border-gray-800" : "bg-white"
               }`}
             >
               {/* HEADER */}

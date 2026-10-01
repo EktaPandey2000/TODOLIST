@@ -5,9 +5,10 @@ import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
 
 function Home({ darkMode, setDarkMode }) {
-  const { user } = useAuth(); 
+  const { user } = useAuth();
+
   const [todolist, setTodolist] = useLocalStorage(
-    `todolist_${user.username}`,                               
+    `todolist_${user.username}`,
     []
   );
   const [filter, setFilter] = useState("all");
@@ -34,7 +35,7 @@ function Home({ darkMode, setDarkMode }) {
 
   const now = new Date();
 
-  // Date strip: -3 days to +10 days (past + future) so old tasks are visible
+  // Date strip: -3 days to +10 days
   const weekDays = Array.from({ length: 14 }, (_, i) => {
     const d = new Date(now);
     d.setDate(now.getDate() + (i - 3));
@@ -117,14 +118,14 @@ function Home({ darkMode, setDarkMode }) {
   const filteredTodos = todolist.filter((todo) => {
     let statusMatch = false;
     if (filter === "all") statusMatch = true;
-    else if (filter === "dueDate") statusMatch = getDueStatus(todo) === "overdue";
+    else if (filter === "dueDate")
+      statusMatch = getDueStatus(todo) === "overdue";
     else statusMatch = todo.status === filter;
 
     const searchMatch = (todo.title || "")
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    // empty selectedDate => all tasks (purane bhi)
     const dateMatch = selectedDate ? todo.dueDate === selectedDate : true;
 
     return statusMatch && searchMatch && dateMatch;
@@ -135,7 +136,9 @@ function Home({ darkMode, setDarkMode }) {
   const currentTodos = filteredTodos.slice(start, start + itemsPerPage);
 
   // ---- styles
-  const pageBg = darkMode ? "bg-gray-950 text-white" : "bg-blue-50 text-slate-900";
+  const pageBg = darkMode
+    ? "bg-gray-950 text-white"
+    : "bg-blue-50 text-slate-900";
   const cardBg = darkMode
     ? "bg-gray-900 border-gray-800"
     : "bg-white border-blue-100";
@@ -180,7 +183,9 @@ function Home({ darkMode, setDarkMode }) {
         />
 
         {/* HEADER CARD */}
-        <div className={`mt-6 rounded-3xl p-5 sm:p-7 border shadow-sm ${cardBg}`}>
+        <div
+          className={`mt-6 rounded-3xl p-5 sm:p-7 border shadow-sm ${cardBg}`}
+        >
           <div className="flex justify-between items-center mb-5">
             <div>
               <p className={`text-sm ${subText}`}>
@@ -190,13 +195,14 @@ function Home({ darkMode, setDarkMode }) {
                   month: "short",
                 })}
               </p>
-              <h1 className="text-2xl sm:text-3xl font-bold mt-1">My Task</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold mt-1">
+                My Task
+              </h1>
             </div>
           </div>
 
           {/* DATE STRIP */}
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {/* All / Reset chip */}
             <button
               onClick={() => setSelectedDate("")}
               className={`shrink-0 h-16 px-4 rounded-2xl flex flex-col items-center justify-center font-semibold transition ${
@@ -252,7 +258,6 @@ function Home({ darkMode, setDarkMode }) {
             })}
           </div>
 
-          {/* Clear selected date banner */}
           {selectedDate && (
             <div className="flex items-center justify-between mt-3 text-xs">
               <span className={subText}>
@@ -328,7 +333,9 @@ function Home({ darkMode, setDarkMode }) {
                 <th className="p-4 w-[17%] font-semibold">Created At</th>
                 <th className="p-4 w-[11%] font-semibold">Status</th>
                 <th className="p-4 w-[11%] font-semibold">Priority</th>
-                <th className="p-4 w-[9%] font-semibold text-center">Action</th>
+                <th className="p-4 w-[9%] font-semibold text-center">
+                  Action
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -573,14 +580,18 @@ function Home({ darkMode, setDarkMode }) {
                     <b>
                       {todo.status === "pending" ? "Pending:" : "Complete:"}
                     </b>{" "}
-                    {todo.status === "pending" ? todo.createdAt : todo.completedAt}
+                    {todo.status === "pending"
+                      ? todo.createdAt
+                      : todo.completedAt}
                   </p>
                 </div>
 
                 <button
                   onClick={() => completeTodo(actualIndex)}
                   className={`w-full py-2 rounded-2xl text-white text-sm font-semibold transition hover:scale-[1.02] ${
-                    todo.status === "pending" ? "bg-orange-500" : "bg-green-500"
+                    todo.status === "pending"
+                      ? "bg-orange-500"
+                      : "bg-green-500"
                   }`}
                 >
                   {todo.status === "pending"
@@ -647,7 +658,9 @@ function Home({ darkMode, setDarkMode }) {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center px-3 sm:px-4 py-4 z-50 overflow-y-auto">
             <div
               className={`w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[95vh] overflow-y-auto ${
-                darkMode ? "bg-gray-900 text-white" : "bg-white text-slate-900"
+                darkMode
+                  ? "bg-gray-900 text-white"
+                  : "bg-white text-slate-900"
               }`}
             >
               <h2 className="text-xl sm:text-2xl font-bold text-center mb-6">
