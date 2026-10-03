@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaTrash, FaEdit } from "react-icons/fa";
+import { FaTrash, FaEdit, FaCalendarAlt } from "react-icons/fa";
 import useLocalStorage from "../hooks/useLocalStorage";
 import Navbar from "../components/Navbar";
 import { useAuth } from "../context/AuthContext";
@@ -23,15 +23,15 @@ function Home({ darkMode, setDarkMode }) {
   const [editPriority, setEditPriority] = useState("medium");
   const [editDueDate, setEditDueDate] = useState("");
 
-  // date strip selection ("" = show all)
-  const [selectedDate, setSelectedDate] = useState("");
-
   const toISO = (d) => {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
     const dd = String(d.getDate()).padStart(2, "0");
     return `${y}-${m}-${dd}`;
   };
+
+  // default = aaj ki date (refresh pe bhi aaj ki date hi selected hogi)
+  const [selectedDate, setSelectedDate] = useState(toISO(new Date()));
 
   const now = new Date();
 
@@ -46,6 +46,9 @@ function Home({ darkMode, setDarkMode }) {
       isToday: i === 3,
     };
   });
+
+  // calendar se koi aisi date chuni ho jo strip me nahi hai
+  const outOfStrip = !weekDays.some((d) => d.iso === selectedDate);
 
   const deleteTodo = (index) => {
     setTodolist(todolist.filter((_, i) => i !== index));
@@ -114,6 +117,15 @@ function Home({ darkMode, setDarkMode }) {
     setTodolist(list);
   };
 
+  // createdAt ("01/10/2026 13:45:34" = dd/mm/yyyy) -> "2026-10-01"
+  const getCreatedISO = (todo) => {
+    if (!todo.createdAt) return "";
+    const datePart = String(todo.createdAt).split(" ")[0].replace(",", "");
+    const [dd, mm, yyyy] = datePart.split("/");
+    if (!dd || !mm || !yyyy) return "";
+    return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+  };
+
   // SEARCH + FILTER + DATE
   const filteredTodos = todolist.filter((todo) => {
     let statusMatch = false;
@@ -126,7 +138,12 @@ function Home({ darkMode, setDarkMode }) {
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    const dateMatch = selectedDate ? todo.dueDate === selectedDate : true;
+    // Today = saare tasks, baaki dates = jis din task add kiya gaya
+    const dateMatch =
+      selectedDate === toISO(new Date())
+        ? true
+        : getCreatedISO(todo) === selectedDate ||
+          todo.dueDate === selectedDate;
 
     return statusMatch && searchMatch && dateMatch;
   });
@@ -169,7 +186,17 @@ function Home({ darkMode, setDarkMode }) {
   };
 
   return (
-    <div className={`min-h-screen px-3 sm:px-4 py-6 sm:py-10 ${pageBg}`}>
+    <div
+      className={`min-h-screen px-3 sm:px-4 pt-2 pb-6 sm:pb-10 ${pageBg}`}
+      style={{
+        backgroundImage: darkMode
+          ? "linear-gradient(rgba(3,7,18,0.88), rgba(3,7,18,0.88)), url('/bg.png')"
+          : "linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)), url('/bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <div className="w-full max-w-7xl mx-auto">
         {/* NAVBAR */}
         <Navbar
@@ -199,37 +226,57 @@ function Home({ darkMode, setDarkMode }) {
                 My Task
               </h1>
             </div>
+
           </div>
 
           {/* DATE STRIP */}
           <div className="flex gap-2 overflow-x-auto pb-2">
-            <button
-              onClick={() => setSelectedDate("")}
-              className={`shrink-0 h-16 px-4 rounded-2xl flex flex-col items-center justify-center font-semibold transition ${
-                selectedDate === ""
-                  ? "bg-blue-600 text-white shadow-lg scale-105"
+            {/* CALENDAR PICKER: strip ke bahar ki koi bhi date chuno */}
+            <label
+              className={`relative cursor-pointer shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center gap-1 font-semibold transition border ${
+                outOfStrip
+                  ? "bg-blue-600 text-white shadow-lg scale-105 border-transparent"
                   : darkMode
-                  ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                  : "bg-blue-50 text-slate-700 hover:bg-blue-100"
+                  ? "bg-gray-800 text-gray-300 hover:bg-gray-700 border-transparent"
+                  : "bg-blue-50 text-slate-700 hover:bg-blue-100 border-transparent"
               }`}
+              title="Calendar se date chuno"
             >
-              <span className="text-lg">All</span>
-              <span
-                className={`text-[10px] ${
-                  selectedDate === "" ? "text-blue-100" : subText
-                }`}
-              >
-                Tasks
+              <FaCalendarAlt size={16} />
+              <span className="text-[11px] leading-none">
+                {outOfStrip
+                  ? new Date(selectedDate + "T00:00:00").toLocaleDateString(
+                      "en-US",
+                      { day: "numeric", month: "short" }
+                    )
+                  : "Pick"}
               </span>
-            </button>
+              <input
+                type="date"
+                value={selectedDate}
+                onClick={(e) => e.target.showPicker && e.target.showPicker()}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setSelectedDate(e.target.value);
+                    setPage(1);
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+            </label>
 
             {weekDays.map((d) => {
               const active = selectedDate === d.iso;
+              const hasDue = todolist.some((t) => t.dueDate === d.iso);
               return (
                 <button
                   key={d.iso}
-                  onClick={() => setSelectedDate(active ? "" : d.iso)}
-                  className={`shrink-0 w-14 h-16 rounded-2xl flex flex-col items-center justify-center font-semibold transition border ${
+                  onClick={() => {
+                    setSelectedDate(d.iso);
+                    setPage(1);
+                  }}
+                  title={hasDue ? "Is din kisi task ki due date hai" : ""}
+                  className={`relative flex-1 min-w-14 h-16 rounded-2xl flex flex-col items-center justify-center font-semibold transition border ${
                     active
                       ? "bg-blue-600 text-white shadow-lg scale-105 border-transparent"
                       : d.isToday
@@ -253,24 +300,25 @@ function Home({ darkMode, setDarkMode }) {
                   >
                     {d.isToday ? "Today" : d.label}
                   </span>
+                  {hasDue && (
+                    <span
+                      className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${
+                        active ? "bg-white" : "bg-red-500"
+                      }`}
+                    />
+                  )}
                 </button>
               );
             })}
           </div>
 
-          {selectedDate && (
-            <div className="flex items-center justify-between mt-3 text-xs">
-              <span className={subText}>
-                Showing tasks due on <b>{selectedDate}</b>
-              </span>
-              <button
-                onClick={() => setSelectedDate("")}
-                className="text-blue-600 font-semibold hover:underline"
-              >
-                ✕ Show all tasks
-              </button>
-            </div>
-          )}
+          <p className={`mt-3 text-xs ${subText}`}>
+            {selectedDate === toISO(new Date()) ? (
+              <>Showing <b>all tasks</b></>
+            ) : (
+              <>Showing tasks added or due on <b>{selectedDate}</b></>
+            )}
+          </p>
         </div>
 
         {/* FILTER ROW */}

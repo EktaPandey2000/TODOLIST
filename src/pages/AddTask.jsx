@@ -88,9 +88,17 @@ function AddTask({ darkMode, setDarkMode }) {
 
   return (
     <div
-      className={`min-h-screen px-3 sm:px-4 py-6 sm:py-10 ${
-        darkMode ? "bg-gray-950 text-white" : "bg-[#eaf3fc] text-black"
+      className={`min-h-screen px-3 sm:px-4 pt-2 pb-6 sm:pb-10 ${
+        darkMode ? "bg-gray-950 text-white" : "bg-pink-100 text-black"
       }`}
+      style={{
+        backgroundImage: darkMode
+          ? "linear-gradient(rgba(3,7,18,0.88), rgba(3,7,18,0.88)), url('/addtask-bg.png')"
+          : "url('/bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
     >
       <div className="w-full max-w-7xl mx-auto">
         <Navbar darkMode={darkMode} setDarkMode={setDarkMode} />

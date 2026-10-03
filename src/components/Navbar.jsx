@@ -37,22 +37,35 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
   const linkClass = (path) =>
     `flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition ${
       location.pathname === path
-        ? "bg-blue-500 text-white shadow-md"
+        ? "bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/30"
         : darkMode
-        ? "text-gray-300 hover:bg-gray-800"
-        : "text-slate-600 hover:bg-blue-50"
+        ? "text-gray-300 hover:bg-white/10"
+        : "text-slate-700 hover:bg-white/70"
     }`;
 
   return (
+    <>
     <nav
-      className={`flex items-center justify-between gap-3 px-3 sm:px-4 py-3 rounded-2xl mb-6 border ${
-        darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-blue-100"
+      className={`fixed top-0 left-0 right-0 z-40 border-b shadow-lg backdrop-blur-xl ${
+        darkMode
+          ? "bg-gray-900/70 border-white/10"
+          : "bg-white/60 border-white/70"
       }`}
     >
+    <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 px-3 sm:px-4 py-3">
       {/* Left */}
       <div className="flex items-center gap-2 shrink-0">
         {isAuthenticated ? (
           <>
+            <Link
+              to="/"
+              className="hidden lg:flex items-center gap-2 mr-3 font-extrabold text-lg tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+            >
+              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-white flex items-center justify-center text-sm shadow-md">
+                ✓
+              </span>
+              TaskFlow
+            </Link>
             <Link to="/" className={linkClass("/")}>
               <FaHome /> <span className="hidden sm:inline">Home</span>
             </Link>
@@ -67,7 +80,7 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
         )}
       </div>
 
-      {/* Search (only on home when logged in) */}
+      {/* Search */}
       {isAuthenticated && location.pathname === "/" && (
         <div className="flex-1 max-w-md relative">
           <FaSearch
@@ -116,7 +129,9 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
             {menuOpen && (
               <div
                 className={`absolute right-0 mt-2 w-52 rounded-2xl shadow-xl border overflow-hidden z-50 ${
-                  darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-blue-100"
+                  darkMode
+                    ? "bg-gray-900 border-gray-800"
+                    : "bg-white border-blue-100"
                 }`}
               >
                 <div
@@ -124,7 +139,9 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
                     darkMode ? "border-gray-800" : "border-blue-50"
                   }`}
                 >
-                  <p className="font-semibold text-sm truncate">{user.username}</p>
+                  <p className="font-semibold text-sm truncate">
+                    {user.username}
+                  </p>
                   <p
                     className={`text-xs truncate ${
                       darkMode ? "text-gray-400" : "text-slate-500"
@@ -160,7 +177,9 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
             <Link
               to="/login"
               className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
-                darkMode ? "text-gray-300 hover:bg-gray-800" : "text-slate-600 hover:bg-blue-50"
+                darkMode
+                  ? "text-gray-300 hover:bg-gray-800"
+                  : "text-slate-600 hover:bg-blue-50"
               }`}
             >
               Login
@@ -174,7 +193,11 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
           </>
         )}
       </div>
+    </div>
     </nav>
+    {/* spacer: fixed navbar ki height ke barabar jagah */}
+    <div className="h-[72px]" />
+    </>
   );
 }
 
