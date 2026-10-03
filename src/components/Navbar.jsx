@@ -59,9 +59,9 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
           <>
             <Link
               to="/"
-              className="hidden lg:flex items-center gap-2 mr-3 font-extrabold text-lg tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+              className="hidden lg:flex items-center gap-2 mr-3 font-extrabold text-lg tracking-tight bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
             >
-              <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 text-white flex items-center justify-center text-sm shadow-md">
+              <span className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-purple-500 text-white flex items-center justify-center text-sm shadow-md">
                 ✓
               </span>
               TaskFlow
@@ -120,7 +120,7 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold flex items-center justify-center shadow-md hover:scale-105 transition"
+              className="w-10 h-10 rounded-xl bg-linear-to-br from-blue-500 to-purple-500 text-white font-bold flex items-center justify-center shadow-md hover:scale-105 transition"
               title={user.username}
             >
               {user.username.charAt(0).toUpperCase()}
@@ -196,7 +196,7 @@ function Navbar({ darkMode, setDarkMode, search, setSearch }) {
     </div>
     </nav>
     {/* spacer: fixed navbar ki height ke barabar jagah */}
-    <div className="h-[72px]" />
+    <div className="h-18" />
     </>
   );
 }
